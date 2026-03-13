@@ -92,7 +92,25 @@ function initializeButtons() {
 async function startElementSelection() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
+  // First, ensure content script is injected
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['scripts/content.js']
+    });
+  } catch (err) {
+    // Content script might already be injected, that's okay
+    console.log('Content script already injected or error:', err);
+  }
+  
+  // Now send the message
   chrome.tabs.sendMessage(tab.id, { action: 'startSelection' }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Error:', chrome.runtime.lastError.message);
+      alert('Please refresh the page and try again.');
+      return;
+    }
+    
     if (response && response.success) {
       // Listen for element selection
       chrome.runtime.onMessage.addListener(handleElementSelected);
@@ -125,7 +143,23 @@ function displayExtractedCode() {
 async function captureFullPage() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
+  // Ensure content script is injected
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['scripts/content.js']
+    });
+  } catch (err) {
+    console.log('Content script already injected or error:', err);
+  }
+  
   chrome.tabs.sendMessage(tab.id, { action: 'captureFullPage' }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Error:', chrome.runtime.lastError.message);
+      alert('Please refresh the page and try again.');
+      return;
+    }
+    
     if (response && response.data) {
       extractedData = response.data;
       displayExtractedCode();

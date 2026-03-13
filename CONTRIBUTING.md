@@ -1,4 +1,4 @@
-# Contributing to Site2Code
+# Contributing to Site2Code..
 
 First off, thank you for considering contributing to Site2Code! It's people like you that make Site2Code such a great tool.
 

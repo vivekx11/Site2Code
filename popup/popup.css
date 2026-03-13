@@ -356,3 +356,15 @@ textarea.input {
 .project-structure {
   margin-top: 8px;
 }
+
+
+/* Simple syntax highlighting */
+code {
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.language-html, .language-css, .language-jsx {
+  color: var(--text-primary);
+}

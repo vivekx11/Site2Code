@@ -1,4 +1,6 @@
 # 🎨 Site2Code – Copy Code From Any Website
+# THIS IS A CHROME EXTENSION 
+
 
 A powerful Chrome Extension that allows developers to inspect any website and extract its structure and code. Perfect for learning, prototyping, and understanding web design patterns.
 

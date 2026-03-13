@@ -1,0 +1,35 @@
+{
+  "name": "site2code",
+  "version": "1.0.0",
+  "description": "Extract HTML, CSS, and React code from any website",
+  "main": "background/service-worker.js",
+  "scripts": {
+    "dev": "echo Opening development dashboard... && start dev.html",
+    "icons": "start create-icons.html",
+    "zip": "powershell Compress-Archive -Path manifest.json,popup,scripts,background,styles,utils,icons -DestinationPath site2code-v1.0.0.zip -Force",
+    "clean": "powershell Remove-Item site2code-*.zip -ErrorAction SilentlyContinue",
+    "test": "echo Run manual tests - see TESTING.md"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/site2code.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "code-extraction",
+    "html",
+    "css",
+    "react",
+    "tailwind",
+    "developer-tools",
+    "web-development"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/site2code/issues"
+  },
+  "homepage": "https://github.com/yourusername/site2code#readme",
+  "devDependencies": {},
+  "dependencies": {}
+}

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site2Code - Development Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    h1 {
+      font-size: 48px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #4caf50;
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    .card h2 {
+      color: #333;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-icon {
+      font-size: 32px;
+    }
+    .card p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #333;
+      border: 2px solid #ddd;
+    }
+    .btn-secondary:hover {
+      background: #e9ecef;
+      border-color: #ccc;
+    }
+    .quick-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+    .checklist li {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .checklist li::before {
+      content: '✓';
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background: #4caf50;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 24px;
+      font-weight: bold;
+    }
+    .code-block {
+      background: #2d2d30;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+    .tips {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+    .tips strong {
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛠️ Site2Code Development</h1>
+      <span class="status">🟢 Ready to Develop</span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2><span class="card-icon">🚀</span> Quick Start</h2>
+        <ul class="checklist">
+          <li>Generate icons</li>
+          <li>Load extension</li>
+          <li>Start coding</li>
+        </ul>
+        <div class="quick-links">
+          <a href="create-icons.html" class="btn">Generate Icons</a>
+          <button class="btn btn-secondary" onclick="openExtensions()">Open Extensions</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="card-icon">📚</span> Documentation</h2>
+        <p>Essential guides for development</p>
+        <div class="quick-links">
+          <a href="DEV_GUIDE.md" class="btn btn-secondary">Dev Guide</a>
+          <a href="FEATURES.md" class="btn btn-secondary">Features</a>
+          <a href="TESTING.md" class="btn btn-secondary">Testing</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="card-icon">🔧</span> Development Tools</h2>
+        <p>Open Chrome DevTools for debugging</p>
+        <div class="quick-links">
+          <button class="btn" onclick="openExtensions()">Extensions Page</button>
+          <button class="btn btn-secondary" onclick="alert('Right-click extension icon → Inspect popup')">Popup Console</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="card-icon">💻</span> Development Workflow</h2>
+      <p>Follow these steps for efficient development:</p>
+      
+      <h3 style="margin-top: 20px; color: #667eea;">1. Load Extension</h3>
+      <div class="code-block">
+1. Open chrome://extensions/
+2. Enable "Developer mode" (top right)
+3. Click "Load unpacked"
+4. Select this folder
+5. Pin the extension
+      </div>
+
+      <h3 style="margin-top: 20px; color: #667eea;">2. Make Changes</h3>
+      <div class="code-block">
+# Edit files in your editor
+# Save changes
+# Reload extension (click refresh icon)
+# Test on a webpage
+      </div>
+
+      <h3 style="margin-top: 20px; color: #667eea;">3. Debug</h3>
+      <div class="code-block">
+# Popup: Right-click icon → Inspect popup
+# Background: Extensions page → Service worker → Inspect
+# Content: F12 on webpage → Console
+      </div>
+
+      <div class="tips">
+        <strong>💡 Pro Tip:</strong> Install "Extensions Reloader" from Chrome Web Store for one-click reload of all unpacked extensions!
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="card-icon">📁</span> Project Structure</h2>
+      <div class="code-block">
+site2code/
+├── popup/              # Extension UI
+│   ├── popup.html
+│   ├── popup.js
+│   └── popup.css
+├── scripts/            # Content scripts
+│   ├── content.js
+│   ├── elementSelector.js
+│   └── codeExtractor.js
+├── background/         # Service worker
+│   └── service-worker.js
+├── styles/             # Stylesheets
+│   └── content.css
+├── utils/              # Utilities
+│   ├── helpers.js
+│   └── constants.js
+└── icons/              # Extension icons
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="card-icon">🎯</span> Test Sites</h2>
+      <p>Test your changes on these sites:</p>
+      <div class="quick-links">
+        <a href="https://example.com" target="_blank" class="btn btn-secondary">Example.com</a>
+        <a href="https://github.com" target="_blank" class="btn btn-secondary">GitHub</a>
+        <a href="https://stackoverflow.com" target="_blank" class="btn btn-secondary">StackOverflow</a>
+        <a href="https://tailwindcss.com" target="_blank" class="btn btn-secondary">Tailwind</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="card-icon">🐛</span> Common Issues</h2>
+      <ul class="checklist">
+        <li>Extension won't load → Check manifest.json syntax</li>
+        <li>Icons missing → Run create-icons.html</li>
+        <li>Content script not working → Refresh webpage</li>
+        <li>Popup not opening → Check console for errors</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function openExtensions() {
+      window.open('chrome://extensions/', '_blank');
+    }
+  </script>
+</body>
+</html>

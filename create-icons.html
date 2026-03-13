@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site2Code Icon Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      color: #007acc;
+    }
+    .container {
+      background: #252526;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .preview {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .icon-preview {
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #007acc;
+      border-radius: 4px;
+      background: white;
+    }
+    button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #005a9e;
+    }
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    input[type="color"] {
+      width: 60px;
+      height: 40px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    label {
+      display: inline-block;
+      margin: 0 10px;
+    }
+    .instructions {
+      background: #2d2d30;
+      padding: 20px;
+      border-radius: 6px;
+      margin-top: 20px;
+      border-left: 4px solid #007acc;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #007acc;
+    }
+    .instructions ol {
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Site2Code Icon Generator</h1>
+    
+    <div class="controls">
+      <label>
+        Background Color:
+        <input type="color" id="bgColor" value="#007acc">
+      </label>
+      <label>
+        Text Color:
+        <input type="color" id="textColor" value="#ffffff">
+      </label>
+      <button onclick="generateIcons()">Generate Icons</button>
+    </div>
+
+    <div class="preview">
+      <div class="icon-preview">
+        <canvas id="icon16" width="16" height="16"></canvas>
+        <p>16x16</p>
+      </div>
+      <div class="icon-preview">
+        <canvas id="icon48" width="48" height="48"></canvas>
+        <p>48x48</p>
+      </div>
+      <div class="icon-preview">
+        <canvas id="icon128" width="128" height="128"></canvas>
+        <p>128x128</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button onclick="downloadIcon('icon16', 'icon16.png')">Download 16x16</button>
+      <button onclick="downloadIcon('icon48', 'icon48.png')">Download 48x48</button>
+      <button onclick="downloadIcon('icon128', 'icon128.png')">Download 128x128</button>
+      <button onclick="downloadAll()">Download All</button>
+    </div>
+
+    <div class="instructions">
+      <h3>📋 Instructions</h3>
+      <ol>
+        <li>Choose your preferred colors using the color pickers above</li>
+        <li>Click "Generate Icons" to create the icons</li>
+        <li>Click "Download All" to download all three icon sizes</li>
+        <li>Move the downloaded files to the <code>icons/</code> folder in your extension directory</li>
+        <li>Reload the extension in Chrome (chrome://extensions/)</li>
+      </ol>
+      <p><strong>Note:</strong> These are simple placeholder icons. For a professional look, consider using a graphic design tool like Figma, Canva, or Adobe Illustrator.</p>
+    </div>
+  </div>
+
+  <script>
+    function generateIcons() {
+      const bgColor = document.getElementById('bgColor').value;
+      const textColor = document.getElementById('textColor').value;
+
+      drawIcon('icon16', 16, bgColor, textColor);
+      drawIcon('icon48', 48, bgColor, textColor);
+      drawIcon('icon128', 128, bgColor, textColor);
+    }
+
+    function drawIcon(canvasId, size, bgColor, textColor) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      // Clear canvas
+      ctx.clearRect(0, 0, size, size);
+
+      // Draw background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw text
+      ctx.fillStyle = textColor;
+      ctx.font = `bold ${size * 0.5}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('S2C', size / 2, size / 2);
+
+      // Draw border
+      ctx.strokeStyle = textColor;
+      ctx.lineWidth = size * 0.05;
+      ctx.strokeRect(0, 0, size, size);
+    }
+
+    function downloadIcon(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadAll() {
+      setTimeout(() => downloadIcon('icon16', 'icon16.png'), 100);
+      setTimeout(() => downloadIcon('icon48', 'icon48.png'), 300);
+      setTimeout(() => downloadIcon('icon128', 'icon128.png'), 500);
+      
+      alert('All icons will be downloaded. Please move them to the icons/ folder.');
+    }
+
+    // Generate default icons on load
+    window.onload = () => {
+      generateIcons();
+    };
+  </script>
+</body>
+</html>

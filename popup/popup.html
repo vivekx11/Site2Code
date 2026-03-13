@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site2Code</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg==" crossorigin="anonymous">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎨 Site2Code</h1>
+      <div class="theme-toggle">
+        <button id="themeToggle" title="Toggle theme">🌙</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="extract">Extract</button>
+      <button class="tab" data-tab="project">Project</button>
+      <button class="tab" data-tab="github">GitHub</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+
+    <div class="tab-content active" id="extract">
+      <div class="action-buttons">
+        <button id="startSelection" class="btn btn-primary">
+          <span>🎯</span> Select Element
+        </button>
+        <button id="captureFullPage" class="btn btn-secondary">
+          <span>📄</span> Capture Full Page
+        </button>
+      </div>
+
+      <div id="codePreview" class="code-preview hidden">
+        <div class="code-tabs">
+          <button class="code-tab active" data-code="html">HTML</button>
+          <button class="code-tab" data-code="css">CSS</button>
+          <button class="code-tab" data-code="tailwind">Tailwind</button>
+          <button class="code-tab" data-code="react">React</button>
+        </div>
+
+        <div class="code-section active" id="html-code">
+          <div class="code-header">
+            <span>HTML</span>
+            <button class="copy-btn" data-target="html">📋 Copy</button>
+          </div>
+          <pre><code class="language-html" id="htmlContent"></code></pre>
+        </div>
+
+        <div class="code-section" id="css-code">
+          <div class="code-header">
+            <span>CSS</span>
+            <button class="copy-btn" data-target="css">📋 Copy</button>
+          </div>
+          <pre><code class="language-css" id="cssContent"></code></pre>
+        </div>
+
+        <div class="code-section" id="tailwind-code">
+          <div class="code-header">
+            <span>Tailwind Classes</span>
+            <button class="copy-btn" data-target="tailwind">📋 Copy</button>
+          </div>
+          <pre><code class="language-html" id="tailwindContent"></code></pre>
+        </div>
+
+        <div class="code-section" id="react-code">
+          <div class="code-header">
+            <span>React Component</span>
+            <button class="copy-btn" data-target="react">📋 Copy</button>
+          </div>
+          <pre><code class="language-jsx" id="reactContent"></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="project">
+      <div class="project-structure">
+        <div class="structure-header">
+          <h3>📁 Project Structure</h3>
+          <button id="downloadProject" class="btn btn-small">⬇️ Download ZIP</button>
+        </div>
+        <div id="fileExplorer" class="file-explorer"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="github">
+      <div class="github-section">
+        <div id="githubLogin" class="github-login">
+          <h3>Connect to GitHub</h3>
+          <input type="text" id="githubToken" placeholder="Enter GitHub Personal Access Token" class="input">
+          <button id="connectGithub" class="btn btn-primary">Connect</button>
+          <p class="help-text">
+            <a href="https://github.com/settings/tokens/new" target="_blank">Generate token here</a>
+            (needs 'repo' scope)
+          </p>
+        </div>
+
+        <div id="githubConnected" class="github-connected hidden">
+          <div class="user-info">
+            <span id="githubUsername"></span>
+            <button id="disconnectGithub" class="btn btn-small">Disconnect</button>
+          </div>
+
+          <div class="repo-form">
+            <input type="text" id="repoName" placeholder="Repository name" class="input">
+            <textarea id="repoDescription" placeholder="Repository description (optional)" class="input"></textarea>
+            <label class="checkbox-label">
+              <input type="checkbox" id="repoPrivate">
+              Private repository
+            </label>
+            <button id="createRepo" class="btn btn-primary">Create & Push</button>
+          </div>
+
+          <div id="pushStatus" class="push-status hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="settings">
+      <div class="settings-section">
+        <h3>⚙️ Settings</h3>
+        
+        <label class="setting-item">
+          <span>Include inline styles</span>
+          <input type="checkbox" id="includeInlineStyles" checked>
+        </label>
+
+        <label class="setting-item">
+          <span>Include computed styles</span>
+          <input type="checkbox" id="includeComputedStyles" checked>
+        </label>
+
+        <label class="setting-item">
+          <span>Generate Tailwind classes</span>
+          <input type="checkbox" id="generateTailwind" checked>
+        </label>
+
+        <label class="setting-item">
+          <span>Minify extracted code</span>
+          <input type="checkbox" id="minifyCode">
+        </label>
+
+        <button id="resetSettings" class="btn btn-secondary">Reset to Defaults</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-UOoJElONeUNzQbbKQbjldDf9MwOHqxNz49NNJJ1d90yp+X9edsHyJoAs6O4K19CZGaIdjI5ohK+O2y5lBTW6uQ==" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js" integrity="sha512-m7vVwW+cCdMvRBA5FZKwFxn8xR+HOLLkHvvHLKPLLxJxBLCLQqGPKqrXPLLzXZLLxKvLy7yDXHDgo3b+c4VqA==" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

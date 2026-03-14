@@ -273,6 +273,6 @@ project/
 - Batch extraction
 - AI optimization
 
----
+
 
 Have a feature request? Open an issue on GitHub!

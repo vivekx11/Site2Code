@@ -1,4 +1,4 @@
-# 🚀 START HERE - Site2Code Chrome Extension..
+# 🚀 START HERE - Site2Code Chrome Extension
 
 ## Welcome! 👋
 

@@ -46,7 +46,7 @@ Removed all external CDN dependencies:
 The "Download ZIP" feature now downloads files individually instead of as a single ZIP file. This is a temporary solution to avoid external dependencies. In the future, we can:
 - Bundle JSZip locally
 - Use a different ZIP library
-- Implement custom ZIP generation
+
 
 ## All Changes Pushed to GitHub ✅
 

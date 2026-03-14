@@ -1,4 +1,4 @@
-# ✅ Development Checklist..
+# ✅ Development Checklist
 
 ## Initial Setup
 - [ ] Icons created (run create-icons.html)

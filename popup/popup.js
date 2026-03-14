@@ -1,13 +1,8 @@
-// State management
-let extractedData = {
-  html: '',
-  css: '',
-  tailwind: '',
-  react: '',
-  files: {}
-};
+// ─── State ────────────────────────────────────────────────────────────────────
+let extractedData = { html: '', css: '', tailwind: '', react: '', files: {} };
+let storageListener = null;
 
-// Initialize
+// ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initializeTabs();
   initializeTheme();
@@ -16,271 +11,221 @@ document.addEventListener('DOMContentLoaded', () => {
   checkGithubConnection();
 });
 
-// Tab management
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
 function initializeTabs() {
-  const tabs = document.querySelectorAll('.tab');
-  const tabContents = document.querySelectorAll('.tab-content');
-  
-  tabs.forEach(tab => {
+  document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      const targetTab = tab.dataset.tab;
-      
-      tabs.forEach(t => t.classList.remove('active'));
-      tabContents.forEach(tc => tc.classList.remove('active'));
-      
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
       tab.classList.add('active');
-      document.getElementById(targetTab).classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
     });
   });
 
-  // Code tabs
-  const codeTabs = document.querySelectorAll('.code-tab');
-  codeTabs.forEach(tab => {
+  document.querySelectorAll('.code-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      const targetCode = tab.dataset.code;
-      
-      codeTabs.forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.code-section').forEach(cs => cs.classList.remove('active'));
-      
       tab.classList.add('active');
-      document.getElementById(`${targetCode}-code`).classList.add('active');
+      document.getElementById(`${tab.dataset.code}-code`).classList.add('active');
     });
   });
 }
 
-// Theme management
+// ─── Theme ────────────────────────────────────────────────────────────────────
 function initializeTheme() {
-  const themeToggle = document.getElementById('themeToggle');
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  
-  if (savedTheme === 'light') {
+  const btn = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('theme') || 'dark';
+  if (saved === 'light') {
     document.body.setAttribute('data-theme', 'light');
-    themeToggle.textContent = '☀️';
+    btn.textContent = '☀️';
   }
-  
-  themeToggle.addEventListener('click', () => {
-    const currentTheme = document.body.getAttribute('data-theme');
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    
-    document.body.setAttribute('data-theme', newTheme);
-    themeToggle.textContent = newTheme === 'light' ? '☀️' : '🌙';
-    localStorage.setItem('theme', newTheme);
+  btn.addEventListener('click', () => {
+    const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', next);
+    btn.textContent = next === 'light' ? '☀️' : '🌙';
+    localStorage.setItem('theme', next);
   });
 }
 
-// Button handlers
+// ─── Buttons ──────────────────────────────────────────────────────────────────
 function initializeButtons() {
   document.getElementById('startSelection').addEventListener('click', startElementSelection);
   document.getElementById('captureFullPage').addEventListener('click', captureFullPage);
   document.getElementById('downloadProject').addEventListener('click', downloadProject);
-  
-  // Copy buttons
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', () => copyCode(btn.dataset.target));
   });
-
-  // GitHub buttons
   document.getElementById('connectGithub').addEventListener('click', connectGithub);
   document.getElementById('disconnectGithub').addEventListener('click', disconnectGithub);
   document.getElementById('createRepo').addEventListener('click', createAndPushRepo);
-  
-  // Settings
   document.getElementById('resetSettings').addEventListener('click', resetSettings);
 }
 
-// Element selection
+// ─── Element Selection ────────────────────────────────────────────────────────
 async function startElementSelection() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
-  // First, ensure content script is injected
+
+  // Inject content script (safe to call even if already injected)
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['scripts/content.js']
-    });
-  } catch (err) {
-    // Content script might already be injected, that's okay
-    console.log('Content script already injected or error:', err);
-  }
-  
-  // Now send the message
-  chrome.tabs.sendMessage(tab.id, { action: 'startSelection' }, (response) => {
-    if (chrome.runtime.lastError) {
-      console.error('Error:', chrome.runtime.lastError.message);
-      alert('Please refresh the page and try again.');
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['scripts/content.js'] });
+  } catch (_) { /* already injected */ }
+
+  // Inject overlay CSS
+  try {
+    await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ['styles/content.css'] });
+  } catch (_) { /* already injected */ }
+
+  // Ping to confirm content script is alive
+  chrome.tabs.sendMessage(tab.id, { action: 'ping' }, (res) => {
+    if (chrome.runtime.lastError || !res) {
+      showStatus('❌ Could not connect. Please refresh the page and try again.', 'error');
       return;
     }
-    
-    if (response && response.success) {
-      // Listen for element selection
-      chrome.runtime.onMessage.addListener(handleElementSelected);
-    }
+
+    // Tell content script to start selection
+    chrome.tabs.sendMessage(tab.id, { action: 'startSelection' });
+
+    // Show waiting state
+    showStatus('🎯 Click any element on the page…', 'info');
+
+    // Watch storage for result written by content script
+    watchForResult();
   });
 }
 
-function handleElementSelected(message, sender, sendResponse) {
-  if (message.action === 'elementSelected') {
-    extractedData = message.data;
-    displayExtractedCode();
-    generateProjectStructure();
+function watchForResult() {
+  // Remove any previous listener
+  if (storageListener) {
+    chrome.storage.onChanged.removeListener(storageListener);
   }
+
+  storageListener = (changes) => {
+    if (changes.site2codeResult) {
+      extractedData = changes.site2codeResult.newValue;
+      displayExtractedCode();
+      generateProjectStructure();
+      showStatus('✅ Element extracted!', 'success');
+      chrome.storage.onChanged.removeListener(storageListener);
+      storageListener = null;
+    }
+  };
+
+  chrome.storage.onChanged.addListener(storageListener);
 }
 
-// Display extracted code
-function displayExtractedCode() {
-  document.getElementById('codePreview').classList.remove('hidden');
-  
-  document.getElementById('htmlContent').textContent = extractedData.html;
-  document.getElementById('cssContent').textContent = extractedData.css;
-  document.getElementById('tailwindContent').textContent = extractedData.tailwind;
-  document.getElementById('reactContent').textContent = extractedData.react;
-  
-  // Simple syntax highlighting with CSS
-  highlightCode();
-}
-
-// Capture full page
+// ─── Full Page Capture ────────────────────────────────────────────────────────
 async function captureFullPage() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
-  // Ensure content script is injected
+
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['scripts/content.js']
-    });
-  } catch (err) {
-    console.log('Content script already injected or error:', err);
-  }
-  
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['scripts/content.js'] });
+  } catch (_) { /* already injected */ }
+
+  showStatus('📄 Capturing full page…', 'info');
+
   chrome.tabs.sendMessage(tab.id, { action: 'captureFullPage' }, (response) => {
-    if (chrome.runtime.lastError) {
-      console.error('Error:', chrome.runtime.lastError.message);
-      alert('Please refresh the page and try again.');
+    if (chrome.runtime.lastError || !response) {
+      showStatus('❌ Could not connect. Please refresh the page and try again.', 'error');
       return;
     }
-    
-    if (response && response.data) {
+    if (response.data) {
       extractedData = response.data;
       displayExtractedCode();
       generateProjectStructure();
+      showStatus('✅ Full page captured!', 'success');
     }
   });
 }
 
-// Copy code to clipboard
+// ─── Display Code ─────────────────────────────────────────────────────────────
+function displayExtractedCode() {
+  document.getElementById('codePreview').classList.remove('hidden');
+  document.getElementById('htmlContent').textContent = extractedData.html || '';
+  document.getElementById('cssContent').textContent = extractedData.css || '';
+  document.getElementById('tailwindContent').textContent = extractedData.tailwind || '';
+  document.getElementById('reactContent').textContent = extractedData.react || '';
+}
+
+// ─── Status Banner ────────────────────────────────────────────────────────────
+function showStatus(msg, type = 'info') {
+  let banner = document.getElementById('statusBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'statusBanner';
+    banner.style.cssText = 'padding:10px 16px;margin:8px 0;border-radius:6px;font-size:13px;text-align:center;';
+    document.querySelector('.action-buttons').after(banner);
+  }
+  const colors = { info: '#007acc', success: '#4ec9b0', error: '#f44747' };
+  banner.style.background = colors[type] || colors.info;
+  banner.style.color = '#fff';
+  banner.textContent = msg;
+  banner.style.display = 'block';
+  if (type !== 'info') setTimeout(() => { banner.style.display = 'none'; }, 3000);
+}
+
+// ─── Copy ─────────────────────────────────────────────────────────────────────
 function copyCode(target) {
   const content = document.getElementById(`${target}Content`).textContent;
-  
   navigator.clipboard.writeText(content).then(() => {
     const btn = document.querySelector(`[data-target="${target}"]`);
-    const originalText = btn.textContent;
+    const orig = btn.textContent;
     btn.textContent = '✓ Copied!';
-    
-    setTimeout(() => {
-      btn.textContent = originalText;
-    }, 2000);
+    setTimeout(() => { btn.textContent = orig; }, 2000);
   });
 }
 
-// Generate project structure
+// ─── Project Structure ────────────────────────────────────────────────────────
 function generateProjectStructure() {
-  const structure = `
+  document.getElementById('fileExplorer').innerHTML = `
     <div class="folder">📁 project</div>
     <div class="file">📄 index.html</div>
     <div class="file">📄 styles.css</div>
     <div class="folder">📁 components</div>
-    <div class="file" style="padding-left: 40px;">📄 Component.jsx</div>
-    <div class="folder">📁 assets</div>
-    <div class="file" style="padding-left: 40px;">📄 (extracted images)</div>
+    <div class="file" style="padding-left:40px">📄 Component.jsx</div>
   `;
-  
-  document.getElementById('fileExplorer').innerHTML = structure;
-  
-  // Prepare files for download
   extractedData.files = {
     'index.html': extractedData.html,
     'styles.css': extractedData.css,
     'components/Component.jsx': extractedData.react,
-    'README.md': generateReadme()
+    'README.md': `# Extracted by Site2Code\n\nGenerated: ${new Date().toLocaleString()}\n\n## Tailwind Classes\n${extractedData.tailwind}`
   };
 }
 
-// Generate README
-function generateReadme() {
-  return `# Extracted Website Code
-
-Generated by Site2Code Chrome Extension
-
-## Files Included
-- index.html - Main HTML structure
-- styles.css - Extracted CSS styles
-- components/Component.jsx - React component version
-
-## Usage
-1. Open index.html in a browser to view the extracted element
-2. Import Component.jsx in your React project
-3. Customize styles in styles.css as needed
-
-## Tailwind Classes
-${extractedData.tailwind}
-
----
-Generated on ${new Date().toLocaleString()}
-`;
-}
-
-// Download project as ZIP (simplified - downloads individual files)
-async function downloadProject() {
-  // For now, download files individually
-  // A proper ZIP would require a library, but we can't use CDN due to CSP
-  
-  alert('Downloading files individually. Check your downloads folder.');
-  
+// ─── Download ─────────────────────────────────────────────────────────────────
+function downloadProject() {
+  if (!extractedData.html) {
+    showStatus('⚠️ Nothing to download yet. Extract an element first.', 'error');
+    return;
+  }
   Object.entries(extractedData.files).forEach(([path, content]) => {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = path.replace(/\//g, '_'); // Replace slashes with underscores
+    const a = Object.assign(document.createElement('a'), {
+      href: url,
+      download: path.replace(/\//g, '_')
+    });
     a.click();
-    
     URL.revokeObjectURL(url);
   });
 }
 
-// GitHub integration
+// ─── GitHub ───────────────────────────────────────────────────────────────────
 async function connectGithub() {
   const token = document.getElementById('githubToken').value.trim();
-  
-  if (!token) {
-    alert('Please enter a GitHub token');
-    return;
-  }
-  
+  if (!token) { alert('Please enter a GitHub token'); return; }
+
   try {
-    const response = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+    const res = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
     });
-    
-    if (response.ok) {
-      const user = await response.json();
-      
-      chrome.storage.local.set({
-        githubToken: token,
-        githubUsername: user.login
-      }, () => {
-        showGithubConnected(user.login);
-      });
-    } else {
-      alert('Invalid GitHub token');
-    }
-  } catch (error) {
-    alert('Failed to connect to GitHub');
+    if (!res.ok) throw new Error('Invalid token');
+    const user = await res.json();
+    chrome.storage.local.set({ githubToken: token, githubUsername: user.login }, () => {
+      showGithubConnected(user.login);
+    });
+  } catch {
+    alert('Failed to connect. Check your token.');
   }
 }
 
@@ -300,29 +245,17 @@ function disconnectGithub() {
 
 function checkGithubConnection() {
   chrome.storage.local.get(['githubToken', 'githubUsername'], (result) => {
-    if (result.githubToken && result.githubUsername) {
-      showGithubConnected(result.githubUsername);
-    }
+    if (result.githubToken && result.githubUsername) showGithubConnected(result.githubUsername);
   });
 }
 
 async function createAndPushRepo() {
   const repoName = document.getElementById('repoName').value.trim();
-  const repoDescription = document.getElementById('repoDescription').value.trim();
-  const isPrivate = document.getElementById('repoPrivate').checked;
-  
-  if (!repoName) {
-    alert('Please enter a repository name');
-    return;
-  }
-  
-  chrome.storage.local.get(['githubToken', 'githubUsername'], async (result) => {
-    const token = result.githubToken;
-    const username = result.githubUsername;
-    
+  if (!repoName) { alert('Please enter a repository name'); return; }
+
+  chrome.storage.local.get(['githubToken', 'githubUsername'], async ({ githubToken: token, githubUsername: username }) => {
     try {
-      // Create repository
-      const createRepoResponse = await fetch('https://api.github.com/user/repos', {
+      const res = await fetch('https://api.github.com/user/repos', {
         method: 'POST',
         headers: {
           'Authorization': `token ${token}`,
@@ -331,90 +264,51 @@ async function createAndPushRepo() {
         },
         body: JSON.stringify({
           name: repoName,
-          description: repoDescription || 'Code extracted using Site2Code',
-          private: isPrivate
+          description: document.getElementById('repoDescription').value.trim() || 'Code extracted using Site2Code',
+          private: document.getElementById('repoPrivate').checked
         })
       });
-      
-      if (!createRepoResponse.ok) {
-        throw new Error('Failed to create repository');
+      if (!res.ok) throw new Error('Failed to create repository');
+      const repo = await res.json();
+
+      for (const [path, content] of Object.entries(extractedData.files)) {
+        await fetch(`https://api.github.com/repos/${username}/${repoName}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Add ${path}`,
+            content: btoa(unescape(encodeURIComponent(content)))
+          })
+        });
       }
-      
-      const repo = await createRepoResponse.json();
-      
-      // Push files
-      await pushFilesToRepo(token, username, repoName);
-      
-      // Show success
+
       const statusDiv = document.getElementById('pushStatus');
       statusDiv.classList.remove('hidden');
-      statusDiv.innerHTML = `
-        ✅ Successfully created repository!<br>
-        <a href="${repo.html_url}" target="_blank" style="color: var(--accent);">View on GitHub</a>
-      `;
-    } catch (error) {
-      alert('Failed to create repository: ' + error.message);
+      statusDiv.innerHTML = `✅ Repo created! <a href="${repo.html_url}" target="_blank" style="color:var(--accent)">View on GitHub →</a>`;
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
   });
 }
 
-async function pushFilesToRepo(token, username, repoName) {
-  // Push each file to the repository
-  for (const [path, content] of Object.entries(extractedData.files)) {
-    await fetch(`https://api.github.com/repos/${username}/${repoName}/contents/${path}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: `Add ${path}`,
-        content: btoa(unescape(encodeURIComponent(content)))
-      })
-    });
-  }
-}
-
-// Settings
+// ─── Settings ─────────────────────────────────────────────────────────────────
 function loadSettings() {
-  chrome.storage.local.get([
-    'includeInlineStyles',
-    'includeComputedStyles',
-    'generateTailwind',
-    'minifyCode'
-  ], (result) => {
+  chrome.storage.local.get(['includeInlineStyles', 'includeComputedStyles', 'generateTailwind', 'minifyCode'], (result) => {
     document.getElementById('includeInlineStyles').checked = result.includeInlineStyles !== false;
     document.getElementById('includeComputedStyles').checked = result.includeComputedStyles !== false;
     document.getElementById('generateTailwind').checked = result.generateTailwind !== false;
     document.getElementById('minifyCode').checked = result.minifyCode || false;
   });
-  
-  // Save on change
   ['includeInlineStyles', 'includeComputedStyles', 'generateTailwind', 'minifyCode'].forEach(id => {
-    document.getElementById(id).addEventListener('change', (e) => {
-      chrome.storage.local.set({ [id]: e.target.checked });
-    });
+    document.getElementById(id).addEventListener('change', e => chrome.storage.local.set({ [id]: e.target.checked }));
   });
 }
 
 function resetSettings() {
-  const defaults = {
-    includeInlineStyles: true,
-    includeComputedStyles: true,
-    generateTailwind: true,
-    minifyCode: false
-  };
-  
-  chrome.storage.local.set(defaults, () => {
-    loadSettings();
-  });
-}
-
-
-// Simple syntax highlighting function (replaces Prism.js)
-function highlightCode() {
-  // Basic highlighting is handled by CSS
-  // Code is already displayed in <code> tags with proper classes
-  // The CSS will handle the styling
+  const defaults = { includeInlineStyles: true, includeComputedStyles: true, generateTailwind: true, minifyCode: false };
+  chrome.storage.local.set(defaults, loadSettings);
 }

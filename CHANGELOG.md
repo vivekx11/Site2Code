@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export to CodePen/JSFiddle
 - Browser compatibility checker
 - Accessibility audit
-- Performance metrics
+
 
 ### Known Issues
 - Cross-origin stylesheets cannot be fully extracted
